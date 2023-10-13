@@ -15,7 +15,7 @@
 ;; - `doom-variable-pitch-font' -- a non-monospace font (where applicable)
 ;; - `doom-big-font' -- used for `doom-big-font-mode'; use this for
 ;;   presentations or streaming.
-;; - `doom-unicode-font' -- for unicode glyphs
+;; - `doom-symbol-font' -- for symbols
 ;; - `doom-serif-font' -- for the `fixed-pitch-serif' face
 ;;
 ;; See 'C-h v doom-font' for documentation and more examples of what they
@@ -23,6 +23,7 @@
 ;;
 ;;(setq doom-font (font-spec :family "Fira Code" :size 12 :weight 'semi-light)
 ;;      doom-variable-pitch-font (font-spec :family "Fira Sans" :size 13))
+;;
 ;; If you or Emacs can't find your font, use 'M-x describe-font' to look them
 ;; up, `M-x eval-region' to execute elisp code, and 'M-x doom/reload-font' to
 ;; refresh your font settings. If Emacs still can't find your font, it likely
@@ -31,7 +32,7 @@
 ;; There are two ways to load a theme. Both assume the theme is installed and
 ;; available. You can either set `doom-theme' or manually load a theme with the
 ;; `load-theme' function. This is the default:
-
+;;(setq doom-theme 'doom-one)
 
 ;; This determines the style of line numbers in effect. If set to `nil', line
 ;; numbers are disabled. For relative line numbers, set this to `relative'.
@@ -76,49 +77,75 @@
 ;; You can also try 'gd' (or 'C-c c d') to jump to their definition and see how
 ;; they are implemented.
 
-
 ;; -------- CUSTOM ---------
 
 ;;;;;;;;;;; THEME ;;;;;;;;;;;
-(setq doom-theme 'doom-monokai-classic)
+;(setq doom-theme 'doom-monokai-classic)
+(use-package doom-themes
+  :ensure t
+  :config
+  ;; Global settings (defaults)
+  (setq doom-themes-enable-bold t    ; if nil, bold is universally disabled
+        doom-themes-enable-italic t) ; if nil, italics is universally disabled
+  (load-theme 'doom-monokai-classic t)
+
+  ;; Enable flashing mode-line on errors
+  (doom-themes-visual-bell-config)
+  ;; Enable custom neotree theme (all-the-icons must be installed!)
+; Select theme by C-h v neo-theme - avoid next line
+;  (Doom-themes-neotree-config)
+  ;; or for treemacs users
+;  (setq doom-themes-treemacs-theme "doom-atom") ; use "doom-colors" for less minimal icon theme
+;  (doom-themes-treemacs-config)
+  ;; Corrects (and improves) org-mode's native fontification.
+  (doom-themes-org-config))
+
 
 ;; Default Emacs splash image
-(setq fancy-splash-image "~/.config/emacs-gnu-logo.png")
+(setq fancy-splash-image "~/.config/images/emacs/emacs-gnu-logo.png")
 
 ;; Fonts
-(setq doom-font (font-spec :family "Menlo" :size 24 :weight 'semi-light)
-      doom-variable-pitch-font (font-spec :family "Menlo" :size 25))
-
-;;;;;;;;;; ORG-MODE ;;;;;;;;;;
-(setq org-default-notes-file "~/org/organizer.org")
-;; Hides Org's markup
-;; (after! org (setq org-hide-emphasis-markers t))
-
-;; Reveal emphasis markers when cursor is on top of them
-;; (package! org-appear
-;;   :recipe (:host github
-;;            :repo "awth13/org-appear"))
-;; (add-hook! org-mode :append #'org-appear-mode)
+;; Use Ubuntu Mono on Ubuntu, Menlo on Mac
+(setq doom-font (font-spec :family "Ubuntu Mono" :size 22 :weight 'semi-light)
+      doom-variable-pitch-font (font-spec :family "Ubuntu Mono" :size 23))
 
 
 
-;;;;;;;;;; KEYBINDS ;;;;;;;;;;
+;;;;;;;;;; PACKAGES ;;;;;;;;;;;;
 
-;; ORG-MODE
-;; Open org-mode organizer file
-(global-set-key (kbd "C-c o")
-                (lambda () (interactive) (find-file "~/org/organizer.org")))
+;; ORG-ROAM
+(use-package org-roam
+  :ensure t
+  :custom
+  (org-roam-directory "~/org")
+  :bind (("C-c n l" . org-roam-buffer-toggle)
+         ("C-c n f" . org-roam-node-find) ; Start a session to find or create a node
+         ("C-c n i" . org-roam-node-insert))
+  :config
+  (org-roam-db-autosync-mode))
 
-(global-set-key (kbd "C-c c") 'org-capture)
 
-(defun zz/add-file-keybinding (key file &optional desc)
-  (let ((key key)
-        (file file)
-        (desc desc))
-    (map! :desc (or desc file)
-          key
-          (lambda () (interactive) (find-file file)))))
+;; DEFT
+(when (require 'deft nil 'noerror)
+  (setq
+   deft-use-filename-as-title t
+     deft-extensions '("txt" "tex" "org")
+     deft-directory "~/org/"
+     deft-text-mode 'org-mode))
 
-(zz/add-file-keybinding "C-c z i" "~/org/ideas.org" "ideas.org")
-(zz/add-file-keybinding "C-c z p" "~/org/projects.org" "projects.org")
-(zz/add-file-keybinding "C-c z t" "~/org/todo.org" "todo.org")
+;; active Babel languages
+(org-babel-do-load-languages
+ 'org-babel-load-languages
+ '((php . nil)))
+
+
+;;;;;;;;;; PROJECTS ;;;;;;;;;;;;
+
+;; Projectile
+
+(projectile-add-known-project "/projects/drupal/myITAS")
+(projectile-add-known-project "~/.config/doom")
+
+;; Neotree
+
+; Select theme by C-h v neo-theme
